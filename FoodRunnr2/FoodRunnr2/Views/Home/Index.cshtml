@@ -1,0 +1,138 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<div class="container" ng-controller="foodCtrl">
+    @*<input type="text" ng-model="searchName" />
+    <ul ng-repeat="cart in shoppingCart | filter:searchName">
+        <li>{{cart.userName}}</li>
+        <div ng-repeat="item in cart.items">
+            <img height="200px" src="{{item.produceImageUrl}}" />
+        </div>
+    </ul>*@
+
+    @*<div class="row">
+        <div class="col-md-4" ng-repeat="product in shoppingCart[0].items">
+            <p class="text-center">Name: {{product.productName}}</p>
+            <p class="text-center">Price:{{product.productPrice | currency}}</p>
+            <img class="img-responsive img-rounded" height="100px;" src="{{product.produceImageUrl}}" />
+        </div>
+    </div>*@
+    <h2 id="itemDrag">items</h2>
+    <div class="container">
+        <div class="row">
+            <div droppable ng-repeat="cart in shoppingCart" class="col-md-3 text-center" style="border: 1px solid black; height: 170px; width: 170px">
+                {{cart.id}}
+                {{cart.userName}}
+                <div id="productAppend" class="row">
+                    <div class="col-md-4" ng-repeat="items in cart.items">
+                        <img style="height: 20px" src="{{items.produceImageUrl}}" />
+                        <h6 id="quantity">{{items.quantity}}</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br />
+
+    <div class="container">
+        <div class="row">
+            <div draggable class="col-md-2" ng-repeat="item in items">
+                <h6 ng-bind="{{item.id}}" id="products" class="text-center">{{item.id}}</h6>
+                <h6 class="text-center">Name: {{item.productName}}</h6>
+                <h6 class="text-center">Price: {{item.productPrice}}</h6>
+                <img ng-mousedown="findId()" class="img-rounded" height="100px;" src="{{item.produceImageUrl}}" />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section scripts {
+<script>
+    var foodRunnr = angular.module('foodRunnr', []);
+    var theMainId = 0;
+    foodRunnr.controller('foodCtrl', function ($scope, $http, $rootScope) {
+        $rootScope.shoppingCart = "";
+
+        $scope.findId = function () {
+            theMainId = this.item.id;
+            return this.item.id;
+        }
+
+        $scope.productShoppingCart = function () {
+            $http.get('/api/shoppingcarts').
+                success(function (data) {
+                    console.log(data);
+                    $rootScope.shoppingCart = data;
+                }).
+                error(function () {
+                    console.log("Cannot load data");
+                })
+        }
+        $scope.productItems = function () {
+            $http.get('/api/items').
+                success(function (data) {
+                    console.log(data);
+                    $rootScope.items = data;
+                }).
+                error(function () {
+                    console.log("Cannot load data");
+                })
+        }
+        $scope.productShoppingCart();
+        $scope.productItems();
+
+    });
+
+    // This makes any element draggable
+    // Usage: <div draggable>Foobar</div>
+    foodRunnr.directive('draggable', function () {
+        return {
+            // A = attribute, E = Element, C = Class and M = HTML Comment
+            restrict: 'A',
+            //The link function is responsible for registering DOM listeners as well as updating the DOM.
+            link: function (scope, element, attrs) {
+                element.draggable({
+                    revert: true
+                });
+            }
+        };
+    });
+    // This makes any element droppable
+    // Usage: <div droppable></div>
+    foodRunnr.directive('droppable', function ($compile, $http) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attrs) {
+                //This makes an element Droppable
+                element.droppable({
+                    drop: function (event, ui) {
+                        var thisId = $(this).context.innerText;
+                        var myId = thisId.split(" ");
+                        console.log(myId[0]);
+                        $http.post('/api/items', { productId: theMainId, shoppingCartId: Number(myId[0]) }).
+                            success(function (data) {
+                                if (data.isNew) {
+                                    scope.productShoppingCart();
+                                    console.log(data.imageUrl);
+                                } else {
+                                    scope.productShoppingCart();
+                                    console.log("This was already here");
+                                }
+                              }).
+                              error(function(data) {
+                                  console.log(data);
+                              });
+                    }
+                });
+            }
+        };
+    });
+
+</script>
+}
