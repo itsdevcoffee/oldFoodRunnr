@@ -1,4 +1,4 @@
-﻿using FoodRunner.Models;
+using FoodRunner.Models;
 using FoodRunnr2.Models;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,6 @@ namespace FoodRunnr2.Repository
         {
             bool isNew = false;
             ShoppingCartProduct temp = new ShoppingCartProduct();
-            DynamicGetItemViewModel result = new DynamicGetItemViewModel();
             temp = _db.ShoppingCartProducts.Where(p => p.ProductId == productId).Where(m => m.ShoppingCartId == shoppingListId).FirstOrDefault();
             if(temp != null)
             {
@@ -37,11 +36,15 @@ namespace FoodRunnr2.Repository
                 temp = newItem;
                 isNew = true;
             }
-                result.ImageUrl = _db.Products.Where(p => p.Id == temp.ProductId).FirstOrDefault().ProductImageUrl;
-                result.ProductId = temp.ProductId;
-                result.ShoppingCartId = temp.ShoppingCartId;
-                result.Quantity = temp.Quantity;
-                result.IsNew = isNew;
+            DynamicGetItemViewModel result = new DynamicGetItemViewModel
+            {
+                ImageUrl = _db.Products.Where(p => p.Id == temp.ProductId).FirstOrDefault().ProductImageUrl,
+                ProductId = temp.ProductId,
+                ShoppingCartId = temp.ShoppingCartId,
+                Quantity = temp.Quantity,
+                Price = _db.Products.Where(p => p.Id == temp.ProductId).FirstOrDefault().ProductPrice,
+                IsNew = isNew
+            };
             return result;
         }
 
